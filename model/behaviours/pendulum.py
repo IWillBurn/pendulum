@@ -12,16 +12,24 @@ class PhysicsPendulum:
         force = Vector2(0, 0)
 
         part = self.main.mass_center_remoteness * (
-                self.main.size + self.main.counterweight_size) - self.main.counterweight_size
+                self.main.size) - self.main.counterweight_size
         center_len_x = cos(self.main.angle + pi / 2) * part + self.main.axis.x
         center_len_y = sin(self.main.angle + pi / 2) * part + self.main.axis.y
 
         remoteness = sqrt((self.main.axis.x - center_len_x)**2 + (self.main.axis.y - center_len_y)**2)
+        self.main.inertia_moment = (1 / 12) * (self.main.size) ** 2 * self.main.mass
         inertia_moment = steiner(self.main.inertia_moment, self.main.mass,
-                                 remoteness * (self.main.size + self.main.counterweight_size))
+                                 remoteness * (self.main.size))
         self.main.angle_acceleration = - (self.main.params["g"] * self.main.mass - force.y) * remoteness * sin(self.main.angle) / inertia_moment
         self.main.angle_velocity += self.main.angle_acceleration * self.main.params["dt"]
         self.main.angle += self.main.angle_velocity * self.main.params["dt"]
+
+        while self.main.angle < -pi:
+            self.main.angle += 2 * pi
+
+        while self.main.angle >= pi:
+            self.main.angle -= 2 * pi
+
 
 
 class MathPendulum:

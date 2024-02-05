@@ -7,12 +7,23 @@ from model.engine import Engine as ModelEngine
 from tools.closer import Closer
 from view.engine import Engine as ViewEngine
 
-model_engine = ModelEngine([],  {"dt": 0.01, "stop": False})
-view_engine = ViewEngine([], model_engine, {"dt": 0.01, "stop": False})
+selected = [True, None]
+environment = {"dt": 0.01, "g": 10, "scale": 100, "selected": selected}
 
-pendulum = PhysicsPendulum(view_engine.canvas, {"dt": 0.01, "g": 10, "scale": 100})
-model_engine.entities.append(pendulum)
-view_engine.entities.append(pendulum)
+model_engine = ModelEngine([],  {"stop": True, "environment": environment})
+view_engine = ViewEngine([], model_engine, {"dt": 0.001, "stop": True, "selected": selected, "environment": environment})
+
+pendulum1 = PhysicsPendulum(view_engine.canvas, environment)
+pendulum1.name = "Маятник A"
+model_engine.entities.append(pendulum1)
+view_engine.entities.append(pendulum1)
+selected[1] = pendulum1
+
+pendulum2 = PhysicsPendulum(view_engine.canvas, environment)
+pendulum2.name = "Маятник B"
+
+model_engine.entities.append(pendulum2)
+view_engine.entities.append(pendulum2)
 
 model_tread = threading.Thread(target=model_engine.run)
 

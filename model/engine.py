@@ -13,7 +13,7 @@ class Engine:
 
     def run(self):
         while not self.params["closer"].is_closed:
-            time.sleep(self.params["dt"])
+            time.sleep(self.params["environment"]["dt"])
             if self.params["stop"]:
                 continue
             self.update()

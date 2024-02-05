@@ -11,21 +11,27 @@ class PhysicsPendulum:
     def __init__(self, canvas, params):
         self.canvas = canvas
         self.params = params
+        self.end = Vector2(0, 0)
+        self.axis = Vector2(200, 200)
+        self.name_coords = Vector2(-20, -20)
+        self.name = "Маятник"
         self.position = Vector2(0, 0)
         self.velocity = Vector2(0, 0)
         self.acceleration = Vector2(0, 0)
-        self.axis = Vector2(100, 100)
+        self.start_angle = pi / 4
         self.angle = pi / 4
         self.angle_acceleration = 0
         self.angle_velocity = 0
         self.size = 1
-        self.mass = 1
+        self.mass = 10
         self.mass_center_remoteness = 0.5
         self.counterweight_size = 0.1
         self.inertia_moment = (1 / 12) * (self.size + self.counterweight_size) ** 2 * self.mass
         self.model = PhysicsPendulumModel(self)
         self.view = PhysicsPendulumView(self)
 
+    def initialize(self):
+        pass
 
 class MathPendulum:
     def __init__(self, canvas, params):
