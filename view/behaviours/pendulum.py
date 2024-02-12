@@ -4,7 +4,7 @@ from tools.vector import Vector2
 import tkinter as tk
 
 
-class PhysicsPendulum:
+class Pendulum:
     def __init__(self, main):
         self.name = None
         self.main = main
@@ -132,16 +132,10 @@ class PhysicsPendulum:
         self.main.canvas.move(self.name, delta_x, delta_y)
         self.main.canvas.itemconfig(self.name, text=self.main.name)
 
-
-class MathPendulum:
-    def __init__(self, main):
-        self.main = main
-        self.object = None
-
-    def initialize(self):
-        self.object = self.main.canvas.create_oval(1, 1, 8, 8, fill="red", outline="white")
-
-    def draw(self):
-        delta_x = self.main.position.x - self.main.canvas.coords(self.object)[0]
-        delta_y = self.main.position.y - self.main.canvas.coords(self.object)[1]
-        self.main.canvas.move(self.object, delta_x, delta_y)
+    def delete(self):
+        self.main.canvas.delete(self.object)
+        self.main.canvas.delete(self.counterweight)
+        self.main.canvas.delete(self.center)
+        self.main.canvas.delete(self.end)
+        self.main.canvas.delete(self.axis)
+        self.main.canvas.delete(self.name)

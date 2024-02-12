@@ -1,6 +1,9 @@
 import threading
 import time
 import tkinter as tk
+from math import log2
+
+from entities.pendulum import PhysicsPendulum
 
 
 class Engine:
@@ -29,8 +32,21 @@ class Engine:
         self.window_width = 1200
         self.window_height = 900
         self.initialize_interface()
+        self.id_ch = 1
 
     def switch_selected(self):
+        self.mass_entry.config(state=tk.NORMAL)
+        self.length_entry.config(state=tk.NORMAL)
+        self.angle_entry.config(state=tk.NORMAL)
+        self.name_entry.config(state=tk.NORMAL)
+        self.axis_per.config(state=tk.NORMAL)
+        self.inertia_moment_math.config(state=tk.NORMAL)
+        self.inertia_moment_tube.config(state=tk.NORMAL)
+        self.inertia_moment_custom.config(state=tk.NORMAL)
+        self.inertia_moment_entry.config(state=tk.NORMAL)
+        self.inertia_moment_entry.config(state=tk.NORMAL)
+        self.mass_per.config(state=tk.ACTIVE)
+
         self.mass_entry.delete(0, tk.END)
         self.mass_entry.insert(0, self.params["selected"][1].mass)
 
@@ -38,25 +54,121 @@ class Engine:
         self.length_entry.insert(0, self.params["selected"][1].size)
 
         self.angle_entry.delete(0, tk.END)
-        self.angle_entry.insert(0, self.params["selected"][1].angle)
+        self.angle_entry.insert(0, self.params["selected"][1].start_angle)
 
         self.name_entry.delete(0, tk.END)
         self.name_entry.insert(0, self.params["selected"][1].name)
 
-        self.name.text = self.params["selected"][1].name
+        self.name.text = self.params["selected"][1].name + "  (" + self.params["selected"][1].id + ")"
 
-        self.name["text"] = self.params["selected"][1].name
+        self.name["text"] = self.params["selected"][1].name + "  (" + self.params["selected"][1].id + ")"
 
         self.axis_per.set(round(self.params["selected"][1].counterweight_size * 100))
+        self.type.set(self.params["selected"][1].type)
+
+        if self.params["selected"][1].type == "custom":
+            self.inertia_moment_entry.config(state=tk.NORMAL)
+            self.mass_per.config(state=tk.NORMAL)
+            self.inertia_moment_entry.delete(0, tk.END)
+            self.inertia_moment_entry.insert(0, self.params["selected"][1].custom_inertia_moment)
+            self.mass_per.set(round(self.params["selected"][1].custom_mass_center_remoteness * 100))
+        else:
+            self.inertia_moment_entry.delete(0, tk.END)
+            self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
+            self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
+            self.inertia_moment_entry.config(state=tk.DISABLED)
+            self.mass_per.config(state=tk.DISABLED)
+
+    def set_no_selected(self):
+        self.params["selected"][0] = False
+        self.params["selected"][1] = None
+        self.mass_entry.delete(0, tk.END)
+        self.mass_entry.insert(0, "-")
+        self.mass_entry.config(state=tk.DISABLED)
+
+        self.length_entry.delete(0, tk.END)
+        self.length_entry.insert(0, "-")
+        self.length_entry.config(state=tk.DISABLED)
+
+        self.angle_entry.delete(0, tk.END)
+        self.angle_entry.insert(0, "-")
+        self.angle_entry.config(state=tk.DISABLED)
+
+        self.name_entry.delete(0, tk.END)
+        self.name_entry.insert(0, "-")
+        self.name_entry.config(state=tk.DISABLED)
+
+        self.name["text"] = "-"
+
+        self.axis_per.set(0)
+        self.axis_per.config(state=tk.DISABLED)
+        self.type.set("physics")
+        self.inertia_moment_math.config(state=tk.DISABLED)
+        self.inertia_moment_tube.config(state=tk.DISABLED)
+        self.inertia_moment_custom.config(state=tk.DISABLED)
+        self.inertia_moment_entry.config(state=tk.DISABLED)
+
+        self.inertia_moment_entry.delete(0, tk.END)
+        self.inertia_moment_entry.insert(0, "-")
+        self.mass_per.set(0)
+        self.inertia_moment_entry.delete(0, tk.END)
+        self.inertia_moment_entry.insert(0, "-")
+        self.mass_per.set(0)
+        self.inertia_moment_entry.config(state=tk.DISABLED)
+        self.mass_per.config(state=tk.DISABLED)
+
+        self.full_angle["text"] = "-"
+        self.angle["text"] = "-"
+        self.angle_velocity["text"] = "-"
+        self.angle_acceleration["text"] = "-"
+
+
+    def apply(self):
+        self.update_model()
+
+    def restart(self):
+        self.params["selected"][1].restart()
+
+    def delete(self):
+        if self.params["selected"][1] != None:
+            self.params["selected"][1].delete()
+            self.set_no_selected()
 
     def update_model(self):
-
         self.params["selected"][1].mass = float(self.mass_entry.get())
         self.params["selected"][1].size = float(self.length_entry.get())
-        self.params["selected"][1].angle = float(self.angle_entry.get())
+        self.params["selected"][1].start_angle = float(self.angle_entry.get())
         self.params["selected"][1].name = self.name_entry.get()
         self.params["selected"][1].counterweight_size = float(self.axis_per.get()) / 100
+
+        if self.type.get() == "custom":
+            self.params["selected"][1].custom_inertia_moment = float(self.inertia_moment_entry.get())
+            self.params["selected"][1].custom_mass_center_remoteness = float(self.mass_per.get()) / 100
+
         self.params["selected"][0] = True
+
+    def update_environment(self):
+        self.params["environment"]["g"] = float(self.g_entry.get())
+        self.params["environment"]["dt"] = float(self.dt_entry.get())
+
+    def update_model_type(self):
+        if self.type.get() == "thin_walled_rod":
+            self.inertia_moment_entry.config(state=tk.DISABLED)
+            self.mass_per.config(state=tk.DISABLED)
+            self.params["selected"][1].mass_center_remoteness = 0.5
+            self.params["selected"][1].type = "thin_walled_rod"
+        elif self.type.get() == "math":
+            self.inertia_moment_entry.config(state=tk.DISABLED)
+            self.mass_per.config(state=tk.DISABLED)
+            self.params["selected"][1].mass_center_remoteness = 1
+            self.params["selected"][1].type = "math"
+        elif self.type.get() == "custom":
+            self.inertia_moment_entry.config(state=tk.NORMAL)
+            self.mass_per.config(state=tk.NORMAL)
+            self.params["selected"][1].type = "custom"
+            self.inertia_moment_entry.delete(0, tk.END)
+            self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
+            self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
 
     def update_axis_per(self, value):
         self.params["selected"][1].counterweight_size = float(value) / 100
@@ -71,20 +183,36 @@ class Engine:
         else:
             self.play_pause.config(text="◼")
 
+    def add_entity(self):
+        pendulum = PhysicsPendulum(self.canvas,  self.params["environment"])
+        pendulum.name = "Новый Маятник " + str(self.id_ch)
+        pendulum.id = "@p" + str(self.id_ch)
+        self.id_ch+=1
+        pendulum.view.initialize()
+
+        self.entities[pendulum.id] = pendulum
+        self.params["environment"]["model"].entities[pendulum.id] = pendulum
+
     def initialize(self):
-        for entity in self.entities:
-            entity.view.initialize()
+        for key in self.entities:
+            self.entities[key].view.initialize()
 
     def update(self):
-        for entity in self.entities:
-            entity.view.draw()
+        for key in self.entities:
+            self.entities[key].view.draw()
         if self.params["selected"][0]:
             self.switch_selected()
             self.params["selected"][0] = False
+        if self.params["selected"][1] is not None:
+            self.angle["text"] = str(self.params["selected"][1].angle)
+            self.full_angle["text"] = str(self.params["selected"][1].full_angle)
+            self.angle_velocity["text"] = str(self.params["selected"][1].angle_velocity)
+            self.angle_acceleration["text"] = str(self.params["selected"][1].angle_acceleration)
+        self.update_environment()
         self.root.after(int(self.params["dt"] * 1000), self.update)
 
     def initialize_interface(self):
-        self.root.title("Drawing Application")
+        self.root.title("Pendulums")
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -95,6 +223,11 @@ class Engine:
         self.initialize_control_panel_left()
         self.initialize_main()
         self.initialize_control_panel_right()
+        self.g_entry.delete(0, tk.END)
+        self.g_entry.insert(0, self.params["environment"]["g"])
+        self.dt_entry.delete(0, tk.END)
+        self.dt_entry.insert(0, self.params["environment"]["dt"])
+        self.set_no_selected()
 
     def initialize_main(self):
 
@@ -110,29 +243,36 @@ class Engine:
         self.play_pause = tk.Button(self.time_frame, height=1, width=3, text="▶", command=self.set_play_pause)
         self.play_pause.pack(side=tk.BOTTOM, fill=tk.NONE)
 
+        self.canvas_buttons = tk.Frame(self.canvas, width=100, height=50, bg="white", padx=5, pady=5)
+        self.canvas_buttons.pack(side=tk.TOP, anchor=tk.NE, fill=tk.NONE)
+
+        self.add_entity_button = tk.Button(self.canvas_buttons, height=1, width=3, text="+", command=self.add_entity)
+        self.add_entity_button.pack(side=tk.TOP, anchor=tk.SE, fill=tk.NONE)
+
         self.initialize_control_panel_bottom()
 
     def initialize_control_panel_bottom(self):
         self.control_panel_bottom = tk.Frame(self.main, width=600, height=100)
         self.control_panel_bottom.pack(side=tk.TOP, fill=tk.BOTH)
 
-        environment_frame = tk.LabelFrame(self.control_panel_bottom, height=600, text="Переменные окружения")
+        environment_frame = tk.LabelFrame(self.control_panel_bottom, height=600, text="Переменные окружения (@env)")
         environment_frame.pack(side=tk.LEFT, fill=tk.BOTH, anchor=tk.NW, padx=5, pady=5)
 
-        g_entry_frame = tk.LabelFrame(environment_frame, height=50, text="Ускорение свободного падения (м/c)")
+        g_entry_frame = tk.LabelFrame(environment_frame, height=50, text="УСП (м/c) (.g)")
         g_entry_frame.pack(padx=5, pady=5, side=tk.TOP, fill=tk.X, anchor=tk.W)
         self.g_entry = tk.Entry(g_entry_frame)
         self.g_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
-        dt_entry_frame = tk.LabelFrame(environment_frame, height=50, text="Дискретизация симуляции (с)")
+        dt_entry_frame = tk.LabelFrame(environment_frame, height=50, text="Дискретизация симуляции (с) (.dt)")
         dt_entry_frame.pack(padx=5, pady=5, side=tk.TOP, fill=tk.X, anchor=tk.W)
         self.dt_entry = tk.Entry(dt_entry_frame)
         self.dt_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
-        scale_frame = tk.LabelFrame(self.control_panel_bottom, width=100, height=100, text="Масштаб")
+        scale_frame = tk.LabelFrame(self.control_panel_bottom, width=100, height=100, text="Масштаб (м = 2^(x) пикс)")
         scale_frame.pack(padx=5, pady=5, side=tk.RIGHT, fill=tk.NONE, anchor=tk.NW)
         self.scale = tk.Scale(scale_frame, orient=tk.HORIZONTAL, from_=-10, to=10, resolution=0.1, command=self.update_scale)
-        self.scale.pack(padx=5, pady=5, side=tk.RIGHT)
+        self.scale.pack(padx=5, pady=5, side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        self.scale.set(round(log2(self.params["environment"]["scale"]), 2))
 
     def initialize_control_panel_right(self):
         self.control_panel_right = tk.LabelFrame(self.root, width=300, height=600, padx=10, pady=15,
@@ -146,20 +286,26 @@ class Engine:
                                                  text="Состояние маятника")
         self.state.pack(side=tk.TOP, fill=tk.X)
 
+        full_angle_container = tk.LabelFrame(self.state, width=300, height=600,
+                                        text="Полный угол (рад) (.fa)")
+        full_angle_container.pack(side=tk.TOP, fill=tk.X)
+        self.full_angle = tk.Label(full_angle_container, text="-", justify="left")
+        self.full_angle.pack(side=tk.LEFT, anchor=tk.E, fill=tk.X)
+
         angle_container = tk.LabelFrame(self.state, width=300, height=600,
-                                              text="Угол")
+                                              text="Угол (рад) (.a)")
         angle_container.pack(side=tk.TOP, fill=tk.X)
         self.angle = tk.Label(angle_container, text="-", justify="left")
         self.angle.pack(side=tk.LEFT, anchor=tk.E, fill=tk.X)
 
         angle_speed_container = tk.LabelFrame(self.state, width=300, height=600,
-                                   text="Угловая скорость")
+                                   text="Угловая скорость (рад/с) (.av)")
         angle_speed_container.pack(side=tk.TOP, fill=tk.X)
-        self.angle_speed = tk.Label(angle_speed_container, text="-", justify="left")
-        self.angle_speed.pack(side=tk.LEFT, anchor=tk.E, fill=tk.X)
+        self.angle_velocity = tk.Label(angle_speed_container, text="-", justify="left")
+        self.angle_velocity.pack(side=tk.LEFT, anchor=tk.E, fill=tk.X)
 
         angle_acceleration_container = tk.LabelFrame(self.state, width=300, height=600,
-                                        text="Угловое ускорение")
+                                        text="Угловое ускорение (рад/(c*с)) (.aa)")
         angle_acceleration_container.pack(side=tk.TOP, fill=tk.X)
         self.angle_acceleration = tk.Label(angle_acceleration_container, text="-", justify="left")
         self.angle_acceleration.pack(side=tk.LEFT, anchor=tk.E, fill=tk.X)
@@ -203,19 +349,18 @@ class Engine:
         inertia_moment_frame = tk.LabelFrame(self.parameters_container, height=600, text="Момент инерции")
         inertia_moment_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
 
-        lang = tk.StringVar(value="1")
-
-        self.inertia_moment_math = tk.Radiobutton(inertia_moment_frame, value="1", text="Математический", variable=lang)
+        self.type = tk.StringVar(value="thin_walled_rod")
+        self.inertia_moment_math = tk.Radiobutton(inertia_moment_frame, value="thin_walled_rod", text="Тонкостенный стержень", variable=self.type, command=self.update_model_type)
         self.inertia_moment_math.pack(padx=5, pady=2, side=tk.TOP, anchor=tk.W)
-        self.inertia_moment_tube = tk.Radiobutton(inertia_moment_frame, value="2", text="Тонкостенный стержень",
-                                                  variable=lang)
+        self.inertia_moment_tube = tk.Radiobutton(inertia_moment_frame, value="math", text="Математический",
+                                                  variable=self.type, command=self.update_model_type)
         self.inertia_moment_tube.pack(padx=5, pady=2, side=tk.TOP, anchor=tk.W)
-        self.inertia_moment_custom = tk.Radiobutton(inertia_moment_frame, value="3", text="Свободный", variable=lang)
+        self.inertia_moment_custom = tk.Radiobutton(inertia_moment_frame, value="custom", text="Свободный", variable=self.type, command=self.update_model_type)
         self.inertia_moment_custom.pack(padx=5, pady=2, side=tk.TOP, anchor=tk.W)
 
         mass_per_frame = tk.LabelFrame(inertia_moment_frame, height=600, text="Растояние до центра масс (%)")
         mass_per_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
-        self.mass_per = tk.Scale(mass_per_frame, orient=tk.HORIZONTAL, from_=1, to=100, resolution=1, state=tk.DISABLED)
+        self.mass_per = tk.Scale(mass_per_frame, orient=tk.HORIZONTAL, from_=0, to=100, resolution=1, state=tk.DISABLED)
         self.mass_per.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
         length_entry_frame = tk.LabelFrame(inertia_moment_frame, height=600, text="Момент инерции (кг*м*м)")
@@ -223,39 +368,21 @@ class Engine:
         self.inertia_moment_entry = tk.Entry(length_entry_frame, state=tk.DISABLED)
         self.inertia_moment_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
-        self.apply_bottom = tk.Button(self.control_panel_right, width=10, text="Применить", command=self.update_model)
+        self.apply_bottom = tk.Button(self.control_panel_right, width=10, text="Применить", command=self.apply)
         self.apply_bottom.pack(side=tk.TOP, anchor=tk.N, fill=tk.BOTH)
-        self.apply_bottom = tk.Button(self.control_panel_right, width=10, text="Сбросить изменения", command=self.update_model)
-        self.apply_bottom.pack(side=tk.TOP, anchor=tk.N, fill=tk.BOTH)
+        self.restart_bottom = tk.Button(self.control_panel_right, width=10, text="Перезапустить", command=self.restart)
+        self.restart_bottom.pack(side=tk.TOP, anchor=tk.N, fill=tk.BOTH)
+        self.delete_bottom = tk.Button(self.control_panel_right, width=10, text="Удалить", command=self.delete)
+        self.delete_bottom.pack(side=tk.BOTTOM, anchor=tk.N, fill=tk.BOTH)
 
     def initialize_control_panel_left(self):
         self.control_panel_left = tk.Frame(self.root, width=300, height=600, padx=10, pady=10)
-        self.control_panel_left.pack(side=tk.LEFT, fill=tk.NONE)
+        self.control_panel_left.pack(side=tk.LEFT, fill=tk.Y)
 
-        self.entry_frame = tk.Frame(self.control_panel_left, width=300, height=600)
-        self.entry_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.graphs = tk.Frame(self.control_panel_left, width=300, height=600)
+        self.graphs.pack(side=tk.TOP, anchor=tk.N)
 
-        label = tk.Label(self.entry_frame, text="Поле для ввода!", justify=tk.LEFT)
-        label.pack(pady=0, side=tk.TOP, fill=tk.NONE)
 
-        entry = tk.Entry(self.entry_frame, width=20)
-        entry.pack(pady=5, side=tk.LEFT, fill=tk.NONE)
-
-        button = tk.Button(self.entry_frame, width=10, text="Button 1")
-        button.pack(pady=5, side=tk.RIGHT, fill=tk.NONE)
-
-        self.entry_frame = tk.Frame(self.control_panel_left, width=100, height=600)
-        self.entry_frame.pack(side=tk.BOTTOM, fill=tk.NONE)
-
-        label = tk.Label(self.entry_frame, text="Поле для ввода!")
-        label.pack(pady=0, side=tk.TOP, fill=tk.NONE)
-
-        entry = tk.Entry(self.entry_frame, width=20)
-        entry.insert(tk.END, "1")
-        entry.pack(pady=5, side=tk.LEFT, fill=tk.NONE)
-
-        button = tk.Button(self.entry_frame, height=1, width=3, text="▶")
-        button.pack(pady=5, side=tk.RIGHT, fill=tk.NONE)
 
     def run(self):
         self.initialize()
