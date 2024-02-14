@@ -40,7 +40,6 @@ class Engine:
         self.angle_entry.config(state=tk.NORMAL)
         self.name_entry.config(state=tk.NORMAL)
         self.axis_per.config(state=tk.NORMAL)
-        self.inertia_moment_math.config(state=tk.NORMAL)
         self.inertia_moment_tube.config(state=tk.NORMAL)
         self.inertia_moment_custom.config(state=tk.NORMAL)
         self.inertia_moment_entry.config(state=tk.NORMAL)
@@ -66,7 +65,7 @@ class Engine:
         self.axis_per.set(round(self.params["selected"][1].counterweight_size * 100))
         self.type.set(self.params["selected"][1].type)
 
-        if self.params["selected"][1].type == "custom":
+        if self.params["selected"][1].type == "custom" or self.params["selected"][1].type == "real" or self.params["selected"][1].type == "theory":
             self.inertia_moment_entry.config(state=tk.NORMAL)
             self.mass_per.config(state=tk.NORMAL)
             self.inertia_moment_entry.delete(0, tk.END)
@@ -103,7 +102,6 @@ class Engine:
         self.axis_per.set(0)
         self.axis_per.config(state=tk.DISABLED)
         self.type.set("physics")
-        self.inertia_moment_math.config(state=tk.DISABLED)
         self.inertia_moment_tube.config(state=tk.DISABLED)
         self.inertia_moment_custom.config(state=tk.DISABLED)
         self.inertia_moment_entry.config(state=tk.DISABLED)
@@ -141,7 +139,7 @@ class Engine:
         self.params["selected"][1].name = self.name_entry.get()
         self.params["selected"][1].counterweight_size = float(self.axis_per.get()) / 100
 
-        if self.type.get() == "custom":
+        if self.type.get() == "custom" or self.type.get() == "real" or self.type.get() == "theory":
             self.params["selected"][1].custom_inertia_moment = float(self.inertia_moment_entry.get())
             self.params["selected"][1].custom_mass_center_remoteness = float(self.mass_per.get()) / 100
 
@@ -166,6 +164,20 @@ class Engine:
             self.inertia_moment_entry.config(state=tk.NORMAL)
             self.mass_per.config(state=tk.NORMAL)
             self.params["selected"][1].type = "custom"
+            self.inertia_moment_entry.delete(0, tk.END)
+            self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
+            self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
+        elif self.type.get() == "real":
+            self.inertia_moment_entry.config(state=tk.NORMAL)
+            self.mass_per.config(state=tk.NORMAL)
+            self.params["selected"][1].type = "real"
+            self.inertia_moment_entry.delete(0, tk.END)
+            self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
+            self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
+        elif self.type.get() == "theory":
+            self.inertia_moment_entry.config(state=tk.NORMAL)
+            self.mass_per.config(state=tk.NORMAL)
+            self.params["selected"][1].type = "theory"
             self.inertia_moment_entry.delete(0, tk.END)
             self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
             self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
@@ -349,13 +361,11 @@ class Engine:
         inertia_moment_frame = tk.LabelFrame(self.parameters_container, height=600, text="Момент инерции")
         inertia_moment_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
 
-        self.type = tk.StringVar(value="thin_walled_rod")
-        self.inertia_moment_math = tk.Radiobutton(inertia_moment_frame, value="thin_walled_rod", text="Тонкостенный стержень", variable=self.type, command=self.update_model_type)
-        self.inertia_moment_math.pack(padx=5, pady=2, side=tk.TOP, anchor=tk.W)
-        self.inertia_moment_tube = tk.Radiobutton(inertia_moment_frame, value="math", text="Математический",
+        self.type = tk.StringVar(value="real")
+        self.inertia_moment_tube = tk.Radiobutton(inertia_moment_frame, value="theory", text="Теоретический",
                                                   variable=self.type, command=self.update_model_type)
         self.inertia_moment_tube.pack(padx=5, pady=2, side=tk.TOP, anchor=tk.W)
-        self.inertia_moment_custom = tk.Radiobutton(inertia_moment_frame, value="custom", text="Свободный", variable=self.type, command=self.update_model_type)
+        self.inertia_moment_custom = tk.Radiobutton(inertia_moment_frame, value="real", text="Честный", variable=self.type, command=self.update_model_type)
         self.inertia_moment_custom.pack(padx=5, pady=2, side=tk.TOP, anchor=tk.W)
 
         mass_per_frame = tk.LabelFrame(inertia_moment_frame, height=600, text="Растояние до центра масс (%)")

@@ -26,16 +26,16 @@ class PhysicsPendulum:
         self.angle = pi / 4
         self.full_angle = 0
         self.custom_inertia_moment = 1
-        self.custom_mass_center_remoteness = 0.5
+        self.custom_mass_center_remoteness = 1
         self.angle_acceleration = 0
         self.angle_velocity = 0
         self.previous_angle_velocity = self.angle_velocity
         self.size = 1
-        self.type = "thin_walled_rod"
-        self.mass = 10
-        self.mass_center_remoteness = 0.5
+        self.type = "real"
+        self.mass = 1
+        self.mass_center_remoteness = 1
         self.counterweight_size = 0
-        self.inertia_moment = (1 / 12) * (self.size + self.counterweight_size) ** 2 * self.mass
+        self.inertia_moment = 1
         self.model = PhysicsPendulumModel(self)
         self.view = PhysicsPendulumView(self)
 
@@ -46,6 +46,8 @@ class PhysicsPendulum:
         self.angle_acceleration = 0
         self.angle_velocity = 0
         self.full_angle = 0
+        self.previous_angle = self.angle
+        self.previous_angle_velocity = 0
         self.start_tick = self.params["model_tick"]
 
     def delete(self):

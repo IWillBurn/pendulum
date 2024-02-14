@@ -8,13 +8,33 @@ class Pendulum:
     def __init__(self, main):
         self.main = main
         self.steps = {
+            "real": self.step_real,
+            "theory": self.step_theory,
             "math": self.step_math,
             "thin_walled_rod": self.step_thin_walled_rod,
             "custom": self.step_custom,
         }
 
+    def step_real(self):
+        o2 = self.main.params["g"] * self.main.mass * self.main.custom_mass_center_remoteness * self.main.size / self.main.custom_inertia_moment
+        self.main.angle_acceleration = - o2 * sin(self.main.angle)
+        self.main.angle_velocity += self.main.angle_acceleration * self.main.params["dt"]
+        self.main.angle += self.main.angle_velocity * self.main.params["dt"]
+        self.main.mass_center_remoteness = self.main.custom_mass_center_remoteness
+        self.main.full_angle += abs(self.main.angle_velocity * self.main.params["dt"])
+
+    def step_theory(self):
+        o2 = self.main.params["g"] * self.main.mass * self.main.custom_mass_center_remoteness * self.main.size / self.main.custom_inertia_moment
+        self.main.angle = self.main.start_angle * cos(sqrt(o2) * (self.main.params["model_tick"] - self.main.start_tick) * self.main.params["dt"])
+        self.main.mass_center_remoteness = self.main.custom_mass_center_remoteness
+        self.main.angle_velocity = (self.main.angle - self.main.previous_angle) / self.main.params["dt"]
+        self.main.angle_acceleration = (self.main.angle_velocity - self.main.previous_angle_velocity) / self.main.params["dt"]
+        self.main.full_angle += abs(self.main.angle - self.main.previous_angle)
+        self.main.previous_angle = self.main.angle
+        self.main.previous_angle_velocity = self.main.angle_velocity
+
     def step_math(self):
-        o = self.main.params["g"] / self.main.size * (1 - self.main.counterweight_size)
+        o = sqrt(self.main.params["g"] / self.main.size * (1 - self.main.counterweight_size))
         self.main.angle = self.main.start_angle * cos((self.main.params["model_tick"] - self.main.start_tick) * self.main.params["dt"] * o)
         self.main.angle_velocity = (self.main.angle - self.main.previous_angle) / self.main.params["dt"]
         self.main.angle_acceleration = (self.main.angle_velocity - self.main.previous_angle_velocity) / self.main.params["dt"]
