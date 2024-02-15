@@ -1,6 +1,7 @@
 from math import log2
 
 from tools.floats import is_number
+from tools.parser import Parser
 from tools.vector import Vector2
 import tkinter as tk
 
@@ -34,7 +35,7 @@ class Line:
         self.scale_type_changed = False
         self.pause = True
         self.focus_behaviours = {"center": self.center_behaviour, "axis_up": self.axis_up_behaviour, "axis_down": self.axis_down_behaviour, "custom": self.custom_behaviour}
-        self.tokens = ["+", "-", "*", "/", " ", "(", ")"]
+        self.parser = Parser(self.params, ["+", "-", "*", "/", " ", "(", ")"])
 
     def change_x_scale(self, value):
         self.x_scale = float(value)
@@ -60,53 +61,6 @@ class Line:
 
         self.coords.config(
             text="(" + str(round(x, 5)) + ";" + str(round(y, 5)) + ")")
-
-    def calculate_target(self, target):
-        if target == "":
-            return False, 0
-        value = ""
-        self.command = ""
-        for ch in target:
-            is_token = False
-            for token in self.tokens:
-                if ch == token:
-                    if value != "":
-                        ok, result = self.calculate_value(value)
-                        if not ok:
-                            return False, 0
-                        self.command += "(" + str(result) + ")"
-                    value = ""
-                    self.command += str(ch)
-                    is_token = True
-                    break
-            if not is_token:
-                value += ch
-        if value != "":
-            ok, result = self.calculate_value(value)
-            if not ok:
-                return False, 0
-            if result > 0:
-                self.command += str(result)
-            else:
-                self.command += "(" + str(result) + ")"
-        try:
-            target_value = eval(self.command)
-            return True, target_value
-        except:
-            return False, 0
-
-    def calculate_value(self, value_code):
-        current_value = 0
-        if is_number(value_code):
-            return True, float(value_code)
-        try:
-            entity, target_name = value_code.split(".")
-        except ValueError:
-            return False, 0
-        if not (entity in self.params["model"].entities and target_name in self.params["model"].entities[
-            entity].targets):
-            return False, 0
-        return True, self.params["model"].entities[entity].targets[target_name].value
 
     def update_target(self):
         self.target = self.target_entry.get()
@@ -292,9 +246,14 @@ class Line:
         self.need_update = True
 
     def draw(self):
+        ok, target_value = self.parser.calculate_target(self.target)
+        if ok:
+            self.target_entry.config(bg="white")
+        else:
+            self.target_entry.config(bg="#FF5555")
         if self.params["model_tick"] % self.disc == 0 and self.params["model_tick"] != self.current_tick:
             self.update_target()
-            ok, target_value = self.calculate_target(self.target)
             if ok:
+                self.target_entry.config(bg="white")
                 self.current_tick = self.params["model_tick"]
                 self.add(Vector2(self.current_tick, target_value))

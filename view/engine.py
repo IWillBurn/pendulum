@@ -4,6 +4,7 @@ import tkinter as tk
 from math import log2
 
 from entities.pendulum import PhysicsPendulum
+from tools.parser import Parser
 
 
 class Engine:
@@ -33,6 +34,7 @@ class Engine:
         self.window_height = 900
         self.initialize_interface()
         self.id_ch = 1
+        self.parser = Parser(self.params["environment"], ["+", "-", "*", "/", " ", "(", ")"])
 
     def switch_selected(self):
         self.mass_entry.config(state=tk.NORMAL)
@@ -40,11 +42,11 @@ class Engine:
         self.angle_entry.config(state=tk.NORMAL)
         self.name_entry.config(state=tk.NORMAL)
         self.axis_per.config(state=tk.NORMAL)
-        self.inertia_moment_tube.config(state=tk.NORMAL)
-        self.inertia_moment_custom.config(state=tk.NORMAL)
-        self.inertia_moment_entry.config(state=tk.NORMAL)
+        self.type_check.config(state=tk.NORMAL)
         self.inertia_moment_entry.config(state=tk.NORMAL)
         self.mass_per.config(state=tk.ACTIVE)
+
+        self.type.set(int(self.params["selected"][1].type == "real"))
 
         self.mass_entry.delete(0, tk.END)
         self.mass_entry.insert(0, self.params["selected"][1].mass)
@@ -63,24 +65,18 @@ class Engine:
         self.name["text"] = self.params["selected"][1].name + "  (" + self.params["selected"][1].id + ")"
 
         self.axis_per.set(round(self.params["selected"][1].counterweight_size * 100))
-        self.type.set(self.params["selected"][1].type)
 
-        if self.params["selected"][1].type == "custom" or self.params["selected"][1].type == "real" or self.params["selected"][1].type == "theory":
-            self.inertia_moment_entry.config(state=tk.NORMAL)
-            self.mass_per.config(state=tk.NORMAL)
-            self.inertia_moment_entry.delete(0, tk.END)
-            self.inertia_moment_entry.insert(0, self.params["selected"][1].custom_inertia_moment)
-            self.mass_per.set(round(self.params["selected"][1].custom_mass_center_remoteness * 100))
-        else:
-            self.inertia_moment_entry.delete(0, tk.END)
-            self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
-            self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
-            self.inertia_moment_entry.config(state=tk.DISABLED)
-            self.mass_per.config(state=tk.DISABLED)
+        self.inertia_moment_entry.config(state=tk.NORMAL)
+        self.mass_per.config(state=tk.NORMAL)
+        self.inertia_moment_entry.delete(0, tk.END)
+        self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment_formula)
+        self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
 
     def set_no_selected(self):
         self.params["selected"][0] = False
         self.params["selected"][1] = None
+        self.type.set(0)
+        self.type_check.config(state=tk.DISABLED)
         self.mass_entry.delete(0, tk.END)
         self.mass_entry.insert(0, "-")
         self.mass_entry.config(state=tk.DISABLED)
@@ -101,9 +97,8 @@ class Engine:
 
         self.axis_per.set(0)
         self.axis_per.config(state=tk.DISABLED)
-        self.type.set("physics")
-        self.inertia_moment_tube.config(state=tk.DISABLED)
-        self.inertia_moment_custom.config(state=tk.DISABLED)
+        self.type.set(0)
+        self.type_check.config(state=tk.DISABLED)
         self.inertia_moment_entry.config(state=tk.DISABLED)
 
         self.inertia_moment_entry.delete(0, tk.END)
@@ -139,9 +134,18 @@ class Engine:
         self.params["selected"][1].name = self.name_entry.get()
         self.params["selected"][1].counterweight_size = float(self.axis_per.get()) / 100
 
-        if self.type.get() == "custom" or self.type.get() == "real" or self.type.get() == "theory":
-            self.params["selected"][1].custom_inertia_moment = float(self.inertia_moment_entry.get())
-            self.params["selected"][1].custom_mass_center_remoteness = float(self.mass_per.get()) / 100
+        self.params["selected"][1].mass_center_remoteness = float(self.mass_per.get()) / 100
+        if self.type.get() == 1:
+            self.params["selected"][1].type = "real"
+        else:
+            self.params["selected"][1].type = "theory"
+
+        self.params["selected"][1].update_targets()
+        ok, value = self.update_inertia(self.inertia_moment_entry.get())
+        self.params["selected"][1].stop = not ok
+        self.params["selected"][1].inertia_moment_formula = self.inertia_moment_entry.get()
+        if ok:
+            self.params["selected"][1].inertia_moment = float(value)
 
         self.params["selected"][0] = True
 
@@ -150,37 +154,10 @@ class Engine:
         self.params["environment"]["dt"] = float(self.dt_entry.get())
 
     def update_model_type(self):
-        if self.type.get() == "thin_walled_rod":
-            self.inertia_moment_entry.config(state=tk.DISABLED)
-            self.mass_per.config(state=tk.DISABLED)
-            self.params["selected"][1].mass_center_remoteness = 0.5
-            self.params["selected"][1].type = "thin_walled_rod"
-        elif self.type.get() == "math":
-            self.inertia_moment_entry.config(state=tk.DISABLED)
-            self.mass_per.config(state=tk.DISABLED)
-            self.params["selected"][1].mass_center_remoteness = 1
-            self.params["selected"][1].type = "math"
-        elif self.type.get() == "custom":
-            self.inertia_moment_entry.config(state=tk.NORMAL)
-            self.mass_per.config(state=tk.NORMAL)
-            self.params["selected"][1].type = "custom"
-            self.inertia_moment_entry.delete(0, tk.END)
-            self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
-            self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
-        elif self.type.get() == "real":
-            self.inertia_moment_entry.config(state=tk.NORMAL)
-            self.mass_per.config(state=tk.NORMAL)
+        if self.type.get() == 1:
             self.params["selected"][1].type = "real"
-            self.inertia_moment_entry.delete(0, tk.END)
-            self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
-            self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
-        elif self.type.get() == "theory":
-            self.inertia_moment_entry.config(state=tk.NORMAL)
-            self.mass_per.config(state=tk.NORMAL)
+        else:
             self.params["selected"][1].type = "theory"
-            self.inertia_moment_entry.delete(0, tk.END)
-            self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment)
-            self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
 
     def update_axis_per(self, value):
         self.params["selected"][1].counterweight_size = float(value) / 100
@@ -194,6 +171,14 @@ class Engine:
             self.play_pause.config(text="▶")
         else:
             self.play_pause.config(text="◼")
+
+    def update_inertia(self, target):
+        ok, value = self.parser.calculate_target(target)
+        if ok:
+            self.inertia_moment_entry.config(bg="white")
+        else:
+            self.inertia_moment_entry.config(bg="#FF5555")
+        return ok, value
 
     def add_entity(self):
         pendulum = PhysicsPendulum(self.canvas,  self.params["environment"])
@@ -220,6 +205,7 @@ class Engine:
             self.full_angle["text"] = str(self.params["selected"][1].full_angle)
             self.angle_velocity["text"] = str(self.params["selected"][1].angle_velocity)
             self.angle_acceleration["text"] = str(self.params["selected"][1].angle_acceleration)
+            self.inertia_moment_value["text"] = str(self.params["selected"][1].inertia_moment)
         self.update_environment()
         self.root.after(int(self.params["dt"] * 1000), self.update)
 
@@ -322,6 +308,12 @@ class Engine:
         self.angle_acceleration = tk.Label(angle_acceleration_container, text="-", justify="left")
         self.angle_acceleration.pack(side=tk.LEFT, anchor=tk.E, fill=tk.X)
 
+        inertia_moment_container = tk.LabelFrame(self.state, width=300, height=600,
+                                                     text="Момент инерции (кг*(м*м)) (.im)")
+        inertia_moment_container.pack(side=tk.TOP, fill=tk.X)
+        self.inertia_moment_value = tk.Label(inertia_moment_container, text="-", justify="left")
+        self.inertia_moment_value.pack(side=tk.LEFT, anchor=tk.E, fill=tk.X)
+
         """
         self.pendulum_container = tk.LabelFrame(self.control_panel_right, width=200, height=200, padx=10, pady=10,
                                                 text="Маятник")
@@ -338,12 +330,17 @@ class Engine:
         self.name_entry.insert(0, self.name["text"])
         self.name_entry.pack(side=tk.TOP, anchor=tk.N, fill=tk.BOTH)
 
-        mass_entry_frame = tk.LabelFrame(self.parameters_container, height=100, text="Масса (кг)")
+        self.type = tk.IntVar(value=1)
+        self.type_check = tk.Checkbutton(self.parameters_container, text="Полная симуляция", variable=self.type,
+                                   command=self.update_model_type, justify="left")
+        self.type_check.pack(side=tk.TOP, fill=tk.X, expand=True)
+
+        mass_entry_frame = tk.LabelFrame(self.parameters_container, height=100, text="Масса (кг) (.m)")
         mass_entry_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
         self.mass_entry = tk.Entry(mass_entry_frame)
         self.mass_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
-        length_entry_frame = tk.LabelFrame(self.parameters_container, height=100, text="Длина (м)")
+        length_entry_frame = tk.LabelFrame(self.parameters_container, height=100, text="Длина (м) (.r)")
         length_entry_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
         self.length_entry = tk.Entry(length_entry_frame)
         self.length_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
@@ -353,27 +350,18 @@ class Engine:
         self.angle_entry = tk.Entry(angle_entry_frame)
         self.angle_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
-        axis_per_frame = tk.LabelFrame(self.parameters_container, height=600, text="Растояние до оси (%)")
+        axis_per_frame = tk.LabelFrame(self.parameters_container, height=600, text="Растояние до оси (%) (.rp)")
         axis_per_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
         self.axis_per = tk.Scale(axis_per_frame, orient=tk.HORIZONTAL, from_=0, to=100, resolution=1, command=self.update_axis_per)
         self.axis_per.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
-        inertia_moment_frame = tk.LabelFrame(self.parameters_container, height=600, text="Момент инерции")
-        inertia_moment_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
-
-        self.type = tk.StringVar(value="real")
-        self.inertia_moment_tube = tk.Radiobutton(inertia_moment_frame, value="theory", text="Теоретический",
-                                                  variable=self.type, command=self.update_model_type)
-        self.inertia_moment_tube.pack(padx=5, pady=2, side=tk.TOP, anchor=tk.W)
-        self.inertia_moment_custom = tk.Radiobutton(inertia_moment_frame, value="real", text="Честный", variable=self.type, command=self.update_model_type)
-        self.inertia_moment_custom.pack(padx=5, pady=2, side=tk.TOP, anchor=tk.W)
-
-        mass_per_frame = tk.LabelFrame(inertia_moment_frame, height=600, text="Растояние до центра масс (%)")
+        mass_per_frame = tk.LabelFrame(self.parameters_container, height=600, text="Растояние до центра масс (%) (.rmp)")
         mass_per_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
         self.mass_per = tk.Scale(mass_per_frame, orient=tk.HORIZONTAL, from_=0, to=100, resolution=1, state=tk.DISABLED)
         self.mass_per.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
-        length_entry_frame = tk.LabelFrame(inertia_moment_frame, height=600, text="Момент инерции (кг*м*м)")
+
+        length_entry_frame = tk.LabelFrame(self.parameters_container, height=600, text="Формула момента инерции")
         length_entry_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
         self.inertia_moment_entry = tk.Entry(length_entry_frame, state=tk.DISABLED)
         self.inertia_moment_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)

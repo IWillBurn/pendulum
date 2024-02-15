@@ -21,12 +21,10 @@ class PhysicsPendulum:
         self.velocity = Vector2(0, 0)
         self.acceleration = Vector2(0, 0)
         self.start_tick = 0
-        self.start_angle = pi / 4
-        self.previous_angle = pi / 4
-        self.angle = pi / 4
+        self.start_angle = 0.1
+        self.previous_angle = self.start_angle
+        self.angle = self.start_angle
         self.full_angle = 0
-        self.custom_inertia_moment = 1
-        self.custom_mass_center_remoteness = 1
         self.angle_acceleration = 0
         self.angle_velocity = 0
         self.previous_angle_velocity = self.angle_velocity
@@ -38,8 +36,28 @@ class PhysicsPendulum:
         self.inertia_moment = 1
         self.model = PhysicsPendulumModel(self)
         self.view = PhysicsPendulumView(self)
+        self.inertia_moment_formula = self.inertia_moment
+        self.stop = False
+        self.targets = {"a": Target(self.angle),
+                        "r": Target(self.size),
+                        "m": Target(self.mass),
+                        "av": Target(self.angle_velocity),
+                        "aa": Target(self.angle_acceleration),
+                        "fa": Target(self.full_angle),
+                        "rp": Target(self.counterweight_size),
+                        "im": Target(self.inertia_moment),
+                        "rmp": Target(self.mass_center_remoteness)}
 
-        self.targets = {"a": Target(self.angle), "av": Target(self.angle_velocity), "aa": Target(self.angle_acceleration), "fa": Target(self.full_angle)}
+    def update_targets(self):
+        self.targets["a"].value = self.angle
+        self.targets["r"].value = self.size
+        self.targets["m"].value = self.mass
+        self.targets["av"].value = self.angle_velocity
+        self.targets["aa"].value = self.angle_acceleration
+        self.targets["fa"].value = self.full_angle
+        self.targets["rp"].value = self.counterweight_size
+        self.targets["im"].value = self.inertia_moment
+        self.targets["rmp"].value = self.mass_center_remoteness
 
     def restart(self):
         self.angle = self.start_angle
