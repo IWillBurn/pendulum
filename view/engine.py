@@ -46,6 +46,13 @@ class Engine:
         self.inertia_moment_entry.config(state=tk.NORMAL)
         self.mass_per.config(state=tk.ACTIVE)
 
+        if self.params["selected"][1].type == "real":
+            self.gamma.config(state=tk.NORMAL)
+        else:
+            self.gamma.delete(0, tk.END)
+            self.gamma.insert(0, "-")
+            self.gamma.config(state=tk.DISABLED)
+
         self.type.set(int(self.params["selected"][1].type == "real"))
 
         self.mass_entry.delete(0, tk.END)
@@ -56,6 +63,9 @@ class Engine:
 
         self.angle_entry.delete(0, tk.END)
         self.angle_entry.insert(0, self.params["selected"][1].start_angle)
+
+        self.gamma.delete(0, tk.END)
+        self.gamma.insert(0, self.params["selected"][1].gamma)
 
         self.name_entry.delete(0, tk.END)
         self.name_entry.insert(0, self.params["selected"][1].name)
@@ -84,6 +94,10 @@ class Engine:
         self.length_entry.delete(0, tk.END)
         self.length_entry.insert(0, "-")
         self.length_entry.config(state=tk.DISABLED)
+
+        self.gamma.delete(0, tk.END)
+        self.gamma.insert(0, "-")
+        self.gamma.config(state=tk.DISABLED)
 
         self.angle_entry.delete(0, tk.END)
         self.angle_entry.insert(0, "-")
@@ -133,6 +147,7 @@ class Engine:
         self.params["selected"][1].start_angle = float(self.angle_entry.get())
         self.params["selected"][1].name = self.name_entry.get()
         self.params["selected"][1].counterweight_size = float(self.axis_per.get()) / 100
+        self.params["selected"][1].gamma = float(self.gamma.get())
 
         self.params["selected"][1].mass_center_remoteness = float(self.mass_per.get()) / 100
         if self.type.get() == 1:
@@ -156,8 +171,17 @@ class Engine:
     def update_model_type(self):
         if self.type.get() == 1:
             self.params["selected"][1].type = "real"
+
+            self.gamma.config(state=tk.NORMAL)
+            self.gamma.delete(0, tk.END)
+            self.gamma.insert(0, self.params["selected"][1].gamma)
+
         else:
             self.params["selected"][1].type = "theory"
+
+            self.gamma.delete(0, tk.END)
+            self.gamma.insert(0, "-")
+            self.gamma.config(state=tk.DISABLED)
 
     def update_axis_per(self, value):
         self.params["selected"][1].counterweight_size = float(value) / 100
@@ -314,14 +338,6 @@ class Engine:
         self.inertia_moment_value = tk.Label(inertia_moment_container, text="-", justify="left")
         self.inertia_moment_value.pack(side=tk.LEFT, anchor=tk.E, fill=tk.X)
 
-        """
-        self.pendulum_container = tk.LabelFrame(self.control_panel_right, width=200, height=200, padx=10, pady=10,
-                                                text="Маятник")
-        self.pendulum_container.pack(side=tk.TOP, anchor=tk.N, fill=tk.BOTH)
-        self.pendulum_image = tk.Frame(self.pendulum_container, width=200, height=200, padx=10, pady=10, bg="white")
-        self.pendulum_image.pack(side=tk.TOP, anchor=tk.N, fill=tk.BOTH)
-        """
-
         self.parameters_container = tk.LabelFrame(self.control_panel_right, width=200, padx=10, pady=10,
                                                   text="Параметры")
         self.parameters_container.pack(side=tk.TOP, anchor=tk.N, fill=tk.BOTH)
@@ -365,6 +381,12 @@ class Engine:
         length_entry_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
         self.inertia_moment_entry = tk.Entry(length_entry_frame, state=tk.DISABLED)
         self.inertia_moment_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
+
+        gamma_frame = tk.LabelFrame(self.parameters_container, height=600,
+                                       text="Коофициент вязкого трения (ед)")
+        gamma_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
+        self.gamma = tk.Entry(gamma_frame)
+        self.gamma.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
 
         self.apply_bottom = tk.Button(self.control_panel_right, width=10, text="Применить", command=self.apply)
         self.apply_bottom.pack(side=tk.TOP, anchor=tk.N, fill=tk.BOTH)

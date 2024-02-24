@@ -1,5 +1,6 @@
 from math import sin, sqrt, cos, pi
 
+from tools.forces import viscous_friction
 from tools.steiner import steiner
 from tools.vector import Vector2
 
@@ -14,7 +15,7 @@ class Pendulum:
 
     def step_real(self):
         o2 = self.main.params["g"] * self.main.mass * self.main.mass_center_remoteness * self.main.size / self.main.inertia_moment
-        self.main.angle_acceleration = - o2 * sin(self.main.angle)
+        self.main.angle_acceleration = - o2 * sin(self.main.angle) - viscous_friction(self.main.angle_velocity, self.main.gamma)
         self.main.angle_velocity += self.main.angle_acceleration * self.main.params["dt"]
         self.main.angle += self.main.angle_velocity * self.main.params["dt"]
         self.main.full_angle += abs(self.main.angle_velocity * self.main.params["dt"])

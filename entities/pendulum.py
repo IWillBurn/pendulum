@@ -32,6 +32,7 @@ class PhysicsPendulum:
         self.type = "real"
         self.mass = 1
         self.mass_center_remoteness = 1
+        self.gamma = 0
         self.counterweight_size = 0
         self.inertia_moment = 1
         self.model = PhysicsPendulumModel(self)

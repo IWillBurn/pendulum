@@ -79,9 +79,9 @@ class Line:
 
         self.canvas.bind('<Motion>', self.change_coords)
 
-        self.zero_line = self.canvas.create_line(self.draw_start_x - 200, self.draw_start_y, self.draw_start_x,
+        self.zero_line = self.canvas.create_line(self.draw_start_x - 210, self.draw_start_y, self.draw_start_x,
                                                  self.draw_start_y, width=1, fill="gray")
-        self.zero_lable = self.canvas.create_text(self.draw_start_x - 190, self.draw_start_y + 8, text="0",
+        self.zero_lable = self.canvas.create_text(self.draw_start_x - 210, self.draw_start_y + 8, text="0",
                                                   font=("Arial", 8), fill="gray", justify=tk.LEFT, anchor=tk.W)
 
         self.max_line = self.canvas.create_line(self.draw_start_x - 200, self.draw_start_y + 90, self.draw_start_x,
@@ -177,7 +177,7 @@ class Line:
         end_x = self.draw_start_x
         y = self.draw_start_y + self.draw_axis_y * 2 ** self.y_scale
         self.canvas.coords(self.zero_line, start_x, y, end_x, y)
-        self.canvas.coords(self.zero_lable, start_x + 30, y + 8)
+        self.canvas.coords(self.zero_lable, start_x + 10, y + 8)
 
     def refresh_max_line(self):
         y = - (10 - self.draw_start_y) / 2 ** self.y_scale + self.draw_axis_y
