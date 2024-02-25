@@ -5,16 +5,20 @@ from tools.parser import Parser
 from tools.vector import Vector2
 import tkinter as tk
 
+from view.components.inputs.formula_input import FormulaInput
+
 
 class Line:
-    def __init__(self, container, params, target):
-        self.target = target
+    def __init__(self, container, params):
+        self.formula_input = None
+        self.graph_w = 200
+        self.graph_h = 200
         self.container = container
         self.canvas = None
         self.params = params
-        self.points_size = 100
+        self.points_size = int(self.graph_w / 2)
         self.points = []
-        self.pool_size = 100
+        self.pool_size = int(self.graph_w / 2)
         self.pool = []
         self.graph = []
         self.colors = ["red", "green", "blue", "orange", "black"]
@@ -22,8 +26,8 @@ class Line:
         self.x_scale = 1
         self.y_scale = 6.6
         self.need_update = False
-        self.draw_start_x = 200
-        self.draw_start_y = 100
+        self.draw_start_x = self.graph_w
+        self.draw_start_y = self.graph_h / 2
         self.draw_min_y = 0
         self.draw_max_y = 0
         self.draw_axis_y = 0
@@ -62,9 +66,6 @@ class Line:
         self.coords.config(
             text="(" + str(round(x, 5)) + ";" + str(round(y, 5)) + ")")
 
-    def update_target(self):
-        self.target = self.target_entry.get()
-
     def switch_type(self):
         self.scale_type = self.focus_type_var.get()
         self.scale_type_changed = True
@@ -74,31 +75,33 @@ class Line:
         self.start_tick = self.params["model_tick"]
         self.graph_container = tk.LabelFrame(self.container, width=300, height=400)
         self.graph_container.pack(side=tk.TOP, fill=tk.NONE)
-        self.canvas = tk.Canvas(self.graph_container, width=200, height=200, bg="white")
+        self.canvas = tk.Canvas(self.graph_container, width=self.graph_w, height=self.graph_h, bg="white")
         self.canvas.pack(side=tk.TOP, anchor=tk.N)
 
         self.canvas.bind('<Motion>', self.change_coords)
 
-        self.zero_line = self.canvas.create_line(self.draw_start_x - 210, self.draw_start_y, self.draw_start_x,
+        self.zero_line = self.canvas.create_line(self.draw_start_x - self.graph_w + 10, self.draw_start_y, self.draw_start_x,
                                                  self.draw_start_y, width=1, fill="gray")
-        self.zero_lable = self.canvas.create_text(self.draw_start_x - 210, self.draw_start_y + 8, text="0",
+        self.zero_lable = self.canvas.create_text(self.draw_start_x - self.graph_w - 10, self.draw_start_y + 8, text="0",
                                                   font=("Arial", 8), fill="gray", justify=tk.LEFT, anchor=tk.W)
 
-        self.max_line = self.canvas.create_line(self.draw_start_x - 200, self.draw_start_y + 90, self.draw_start_x,
-                                                self.draw_start_y + 90, width=1, fill="gray")
-        self.max_lable = self.canvas.create_text(self.draw_start_x - 190, self.draw_start_y - 82, text="0.5",
+        self.max_line = self.canvas.create_line(self.draw_start_x - self.graph_w, self.draw_start_y + self.graph_h / 2 - 10, self.draw_start_x,
+                                                self.draw_start_y + self.graph_h / 2 - 10, width=1, fill="gray")
+        self.max_lable = self.canvas.create_text(self.draw_start_x - self.graph_w + 10, self.draw_start_y - self.graph_h / 2 + 18, text="0.5",
                                                  font=("Arial", 8), fill="gray", justify=tk.LEFT, anchor=tk.W)
 
-        self.min_line = self.canvas.create_line(self.draw_start_x - 200, self.draw_start_y - 90, self.draw_start_x,
-                                                self.draw_start_y - 90, width=1, fill="gray")
-        self.min_lable = self.canvas.create_text(self.draw_start_x - 190, self.draw_start_y + 98, text="-0.5",
+        self.min_line = self.canvas.create_line(self.draw_start_x - self.graph_w, self.draw_start_y - self.graph_h / 2 + 10, self.draw_start_x,
+                                                self.draw_start_y - self.graph_h / 2 + 10, width=1, fill="gray")
+        self.min_lable = self.canvas.create_text(self.draw_start_x - self.graph_w + 10, self.draw_start_y + self.graph_h / 2 - 2, text="-0.5",
                                                  font=("Arial", 8), fill="gray", justify=tk.LEFT, anchor=tk.W)
 
         self.coords = tk.Label(self.graph_container, text="(0; 0)")
         self.coords.pack(side=tk.TOP, fill=tk.X)
 
-        self.target_entry = tk.Entry(self.graph_container)
-        self.target_entry.pack(side=tk.TOP, fill=tk.X)
+        target_entry = tk.Entry(self.graph_container)
+        target_entry.pack(side=tk.TOP, fill=tk.X)
+
+        self.formula_input = FormulaInput(self.params, self.parser, target_entry)
 
         graph_scales_container = tk.Frame(self.graph_container)
         graph_scales_container.pack(side=tk.TOP, fill=tk.X)
@@ -142,7 +145,6 @@ class Line:
         self.graph_scale_y.set(self.y_scale)
         self.graph_scale_x.set(self.x_scale)
         self.graph_scale_y.config(state=tk.DISABLED)
-        self.target_entry.insert(0, self.target)
 
         for i in range(self.pool_size):
             line = self.canvas.create_line(-10, -10, -20, -20, width=3, fill="black")
@@ -184,7 +186,7 @@ class Line:
         self.canvas.itemconfig(self.max_lable, text=round(y, 2))
 
     def refresh_min_line(self):
-        y = - (190 - self.draw_start_y) / 2 ** self.y_scale + self.draw_axis_y
+        y = - (self.graph_h - 10 - self.draw_start_y) / 2 ** self.y_scale + self.draw_axis_y
         self.canvas.itemconfig(self.min_lable, text=round(y, 2))
 
     def center_behaviour(self, max_y, min_y):
@@ -196,18 +198,18 @@ class Line:
 
     def axis_up_behaviour(self, max_y, min_y):
         self.draw_axis_y = max_y / 2
-        self.y_scale = log2(abs(200 / max_y) * 2 / 3)
+        self.y_scale = log2(abs(self.graph_h / max_y) * 2 / 3)
 
     def axis_down_behaviour(self, max_y, min_y):
         self.draw_axis_y = min_y / 2
-        self.y_scale = log2(abs(200 / min_y) * 2 / 3)
+        self.y_scale = log2(abs(self.graph_h / min_y) * 2 / 3)
 
     def custom_behaviour(self, max_y, min_y):
         self.draw_axis_y = (min_y + max_y) / 2
         if min_y != max_y:
-            self.graph_scale_y.config(to=log2(abs(200 / abs(min_y - max_y)) * 2 / 3))
-        if self.scale_type_changed:
-            self.y_scale = log2(abs(200 / abs(min_y - max_y)) * 2 / 3)
+            self.graph_scale_y.config(to=log2(abs(self.graph_h / abs(min_y - max_y)) * 2 / 3))
+            if self.scale_type_changed:
+                self.y_scale = log2(abs(self.graph_h / abs(min_y - max_y)) * 2 / 3)
 
     def refresh_with_scale(self):
         max_x = 0
@@ -246,14 +248,7 @@ class Line:
         self.need_update = True
 
     def draw(self):
-        ok, target_value = self.parser.calculate_target(self.target)
-        if ok:
-            self.target_entry.config(bg="white")
-        else:
-            self.target_entry.config(bg="#FF5555")
-        if self.params["model_tick"] % self.disc == 0 and self.params["model_tick"] != self.current_tick:
-            self.update_target()
-            if ok:
-                self.target_entry.config(bg="white")
-                self.current_tick = self.params["model_tick"]
-                self.add(Vector2(self.current_tick, target_value))
+        ok, target_value = self.formula_input.calculate()
+        if self.params["model_tick"] % self.disc == 0 and self.params["model_tick"] != self.current_tick and ok:
+            self.current_tick = self.params["model_tick"]
+            self.add(Vector2(self.current_tick, target_value))

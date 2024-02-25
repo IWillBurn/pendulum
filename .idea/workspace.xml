@@ -5,9 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="60a88670-8712-471b-93ad-bacf7d70441e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/tools/forces.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/entities/pendulum.py" beforeDir="false" afterPath="$PROJECT_DIR$/entities/pendulum.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/behaviours/pendulum.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/behaviours/pendulum.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/view/components/inputs/formula_input.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entities/line_graph.py" beforeDir="false" afterPath="$PROJECT_DIR$/entities/line_graph.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/view/components/graph/line.py" beforeDir="false" afterPath="$PROJECT_DIR$/view/components/graph/line.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/view/engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/view/engine.py" afterDir="false" />
     </list>
@@ -100,7 +101,8 @@
       <workItem from="1708023790255" duration="1627000" />
       <workItem from="1708249529646" duration="617000" />
       <workItem from="1708425163828" duration="19000" />
-      <workItem from="1708797148265" duration="2771000" />
+      <workItem from="1708797148265" duration="3964000" />
+      <workItem from="1708876785223" duration="4746000" />
     </task>
     <servers />
   </component>
@@ -115,7 +117,7 @@
     <SUITE FILE_PATH="coverage/PhysicsTkinter$main.coverage" NAME="main Coverage Results" MODIFIED="1707910283807" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Pendulum$pendulum.coverage" NAME="pendulum Coverage Results" MODIFIED="1707933152675" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/model/behaviours" />
     <SUITE FILE_PATH="coverage/Pendulum$engine.coverage" NAME="engine Coverage Results" MODIFIED="1707932914441" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/view" />
-    <SUITE FILE_PATH="coverage/Pendulum$main.coverage" NAME="main Coverage Results" MODIFIED="1708799334051" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/Pendulum$main.coverage" NAME="main Coverage Results" MODIFIED="1708882173783" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/PhysicsTkinter$pendulum.coverage" NAME="pendulum Coverage Results" MODIFIED="1707899954581" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/entities" />
   </component>
 </project>

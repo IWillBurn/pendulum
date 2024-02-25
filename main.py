@@ -18,10 +18,10 @@ view_engine = ViewEngine({}, model_engine, {"dt": 0.001, "stop": True, "selected
 environment["model"] = model_engine
 environment["view"] = view_engine
 
-graph1 = LineGraph(view_engine.graphs, environment, "(@p1.fa - @p2.fa) / (@env.mt * @env.dt)")
+graph1 = LineGraph(view_engine.graphs, environment)
 view_engine.entities["@g1"] = graph1
 
-graph2 = LineGraph(view_engine.graphs, environment, "@p2.a")
+graph2 = LineGraph(view_engine.graphs, environment)
 view_engine.entities["@g2"] = graph2
 
 env = Environment(environment)

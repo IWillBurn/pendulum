@@ -5,6 +5,7 @@ from math import log2
 
 from entities.pendulum import PhysicsPendulum
 from tools.parser import Parser
+from view.components.inputs.formula_input import FormulaInput
 
 
 class Engine:
@@ -43,7 +44,7 @@ class Engine:
         self.name_entry.config(state=tk.NORMAL)
         self.axis_per.config(state=tk.NORMAL)
         self.type_check.config(state=tk.NORMAL)
-        self.inertia_moment_entry.config(state=tk.NORMAL)
+        self.inertia_moment_fi.set_normal()
         self.mass_per.config(state=tk.ACTIVE)
 
         if self.params["selected"][1].type == "real":
@@ -70,16 +71,14 @@ class Engine:
         self.name_entry.delete(0, tk.END)
         self.name_entry.insert(0, self.params["selected"][1].name)
 
-        self.name.text = self.params["selected"][1].name + "  (" + self.params["selected"][1].id + ")"
-
         self.name["text"] = self.params["selected"][1].name + "  (" + self.params["selected"][1].id + ")"
 
         self.axis_per.set(round(self.params["selected"][1].counterweight_size * 100))
 
-        self.inertia_moment_entry.config(state=tk.NORMAL)
+        self.inertia_moment_fi.set_normal()
+        self.inertia_moment_fi.set_target(self.params["selected"][1].inertia_moment_formula)
+
         self.mass_per.config(state=tk.NORMAL)
-        self.inertia_moment_entry.delete(0, tk.END)
-        self.inertia_moment_entry.insert(0, self.params["selected"][1].inertia_moment_formula)
         self.mass_per.set(round(self.params["selected"][1].mass_center_remoteness * 100))
 
     def set_no_selected(self):
@@ -113,15 +112,10 @@ class Engine:
         self.axis_per.config(state=tk.DISABLED)
         self.type.set(0)
         self.type_check.config(state=tk.DISABLED)
-        self.inertia_moment_entry.config(state=tk.DISABLED)
+        self.inertia_moment_fi.set_target("-")
+        self.inertia_moment_fi.set_disabled()
 
-        self.inertia_moment_entry.delete(0, tk.END)
-        self.inertia_moment_entry.insert(0, "-")
         self.mass_per.set(0)
-        self.inertia_moment_entry.delete(0, tk.END)
-        self.inertia_moment_entry.insert(0, "-")
-        self.mass_per.set(0)
-        self.inertia_moment_entry.config(state=tk.DISABLED)
         self.mass_per.config(state=tk.DISABLED)
 
         self.full_angle["text"] = "-"
@@ -156,9 +150,11 @@ class Engine:
             self.params["selected"][1].type = "theory"
 
         self.params["selected"][1].update_targets()
-        ok, value = self.update_inertia(self.inertia_moment_entry.get())
+
+        ok, value = self.inertia_moment_fi.calculate()
+
         self.params["selected"][1].stop = not ok
-        self.params["selected"][1].inertia_moment_formula = self.inertia_moment_entry.get()
+        self.params["selected"][1].inertia_moment_formula = self.inertia_moment_fi.get_target_formula()
         if ok:
             self.params["selected"][1].inertia_moment = float(value)
 
@@ -195,14 +191,6 @@ class Engine:
             self.play_pause.config(text="▶")
         else:
             self.play_pause.config(text="◼")
-
-    def update_inertia(self, target):
-        ok, value = self.parser.calculate_target(target)
-        if ok:
-            self.inertia_moment_entry.config(bg="white")
-        else:
-            self.inertia_moment_entry.config(bg="#FF5555")
-        return ok, value
 
     def add_entity(self):
         pendulum = PhysicsPendulum(self.canvas,  self.params["environment"])
@@ -379,8 +367,10 @@ class Engine:
 
         length_entry_frame = tk.LabelFrame(self.parameters_container, height=600, text="Формула момента инерции")
         length_entry_frame.pack(side=tk.TOP, fill=tk.BOTH, anchor=tk.N)
-        self.inertia_moment_entry = tk.Entry(length_entry_frame, state=tk.DISABLED)
-        self.inertia_moment_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
+        inertia_moment_entry = tk.Entry(length_entry_frame, state=tk.DISABLED)
+        inertia_moment_entry.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.X, expand=True)
+
+        self.inertia_moment_fi = FormulaInput(self.params, Parser(self.params, ["+", "-", "*", "/", " ", "(", ")"]), inertia_moment_entry)
 
         gamma_frame = tk.LabelFrame(self.parameters_container, height=600,
                                        text="Коофициент вязкого трения (ед)")
